@@ -1,26 +1,26 @@
-import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ProductService } from './product/product.service';
+import { Module } from '@nestjs/common';
+import { NewProduct } from './new-product/new-product.entity';
+import { NewProductController } from './new-product/new-product.controller';
+import { NewProductService } from './new-product/new-product.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Product } from './product/product.entity';
-import { ProductController } from './product/product.controller';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot({
-      type: 'postgres', // or 'mysql', 'sqlite', etc.
+      type: 'postgres',
       host: 'localhost',
       port: 5432,
-      username: 'your_db_username',
-      password: 'your_db_password',
-      database: 'your_db_name',
-      entities: [Product],
-      synchronize: true, // Automatically sync database schema (for development only)
+      username: 'postgres',
+      password: 'admin',
+      database: 'digikala-seller',
+      entities: [NewProduct],
+      synchronize: true,
     }),
-    TypeOrmModule.forFeature([Product]),
+    TypeOrmModule.forFeature([NewProduct]),
   ],
-  controllers: [AppController, ProductController],
-  providers: [AppService, ProductService],
+  controllers: [AppController, NewProductController],
+  providers: [AppService, NewProductService],
 })
 export class AppModule {}
