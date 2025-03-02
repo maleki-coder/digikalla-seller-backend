@@ -1,13 +1,13 @@
-import { NewProduct } from 'src/new-product/new-product.entity';
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
+  CreateDateColumn,
+  Entity,
   JoinColumn,
   OneToOne,
-  CreateDateColumn,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
 
+import { NewProduct } from 'src/new-product/new-product.entity';
 
 @Entity()
 export class DigikalaCost {
@@ -23,14 +23,17 @@ export class DigikalaCost {
   @Column('decimal', { precision: 20, scale: 1 })
   fulfillmentAndDeliveryCost: number;
 
-  @Column('decimal', { precision: 20, scale: 1 })
+  @Column('decimal', { precision: 20, scale: 1, nullable : true })
   labelCost: number;
 
   @Column('decimal', { precision: 20, scale: 1 })
   taxCost: number;
 
-  @Column('decimal', { precision: 20, scale: 1 })
+  @Column('decimal', { precision: 20, scale: 1 , nullable : true})
   wareHousingCost: number;
+  
+  @Column('decimal', { precision: 20, scale: 1 })
+  totalCost: number;
 
   @OneToOne(() => NewProduct, (product) => product.digikalaCost)
   @JoinColumn({ name: 'productId' })

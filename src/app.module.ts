@@ -1,12 +1,12 @@
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { DigikalaCost } from './digikala-cost/digikala-cost.entity';
+import { InitialCost } from './initial-cost/initial-cost.entity';
 import { Module } from '@nestjs/common';
 import { NewProduct } from './new-product/new-product.entity';
 import { NewProductController } from './new-product/new-product.controller';
 import { NewProductService } from './new-product/new-product.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { DigikalaCost } from './digikala-cost/digikala-cost.entity';
-import { InitialCost } from './initial-cost/initial-cost.entity';
 
 @Module({
   imports: [
@@ -15,8 +15,8 @@ import { InitialCost } from './initial-cost/initial-cost.entity';
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: '1234',
-      database: 'digikala',
+      password: 'admin',
+      database: 'digikala-seller',
       entities: [NewProduct,InitialCost, DigikalaCost],
       synchronize: true,
     }),

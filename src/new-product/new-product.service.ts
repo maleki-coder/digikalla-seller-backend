@@ -7,7 +7,14 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NewProduct } from './new-product.entity';
-import { calculateComissionFee, calculateVAT } from 'src/utils/pricing.util';
+import {
+  calculateComissionFee,
+  calculateDigiKalaCosts,
+  calculateInitialCosts,
+  calculateNetProfit,
+  calculateProfitPercentage,
+  calculateVAT,
+} from 'src/utils/pricing.util';
 import { normalizeArabicPersianNumbers } from 'src/utils/character.covertor';
 import { CreateProductData } from './new-product.dto';
 import { InitialCost } from 'src/initial-cost/initial-cost.entity';
@@ -22,17 +29,22 @@ export class NewProductService {
     private readonly initialCostRepository: Repository<InitialCost>, // Inject InitialCost repository
     @InjectRepository(DigikalaCost)
     private readonly digikalaCostRepository: Repository<DigikalaCost>, // Inject DigikalaCost repository
-  ) { }
+  ) {}
 
   async create(productData: Partial<CreateProductData>): Promise<NewProduct> {
     try {
       // Validate required fields
-      if (
-        !productData.title ||
-        !productData.sellingPrice ||
-        !productData.currencyRate
-      ) {
-        throw new BadRequestException('Missing required fields');
+      if (!productData.currencyRate) {
+        throw new BadRequestException('نرخ ارز را وارد کنید');
+      }
+      if (!productData.title) {
+        throw new BadRequestException('عنوان کالا را وارد کنید');
+      }
+      if (!productData.buyingPrice) {
+        throw new BadRequestException('قیمت خرید را وارد کنید')
+      }
+      if (!productData.sellingPrice) {
+        throw new BadRequestException('قیمت فروش را وارد کنید')
       }
 
       // Normalize title
@@ -49,19 +61,26 @@ export class NewProductService {
 
       // Create and save InitialCost
       const initialCost = this.initialCostRepository.create({
-        buyingPrice: productData.buyingPrice || 0,
-        shippingCost: productData.shippingCost || 0,
-        cargoCost: productData.cargoCost || 0,
-        currencyRate: productData.currencyRate || 0,
+        buyingPrice: productData.buyingPrice,
+        shippingCost: productData.shippingCost,
+        cargoCost: productData.cargoCost,
+        currencyRate: productData.currencyRate,
+        totalCost: calculateInitialCosts(
+          productData.buyingPrice || 0,
+          productData.shippingCost || 0,
+          productData.cargoCost || 0,
+          productData.currencyRate,
+          (productData.currencyType = 'toman'),
+        ),
       });
       await this.initialCostRepository.save(initialCost);
 
       // Create and save DigikalaCost
       const digikalaCost = this.digikalaCostRepository.create({
-        commission: productData.commission || 0,
-        fulfillmentAndDeliveryCost: productData.fulfillmentAndDeliveryCost || 0,
-        labelCost: productData.labelCost || 4000,
-        wareHousingCost: productData.wareHousingCost || 6000,
+        commission: productData.commission,
+        fulfillmentAndDeliveryCost: productData.fulfillmentAndDeliveryCost,
+        labelCost: productData.labelCost,
+        wareHousingCost: productData.wareHousingCost,
         commissionFee: calculateComissionFee(
           productData.sellingPrice,
           productData.currencyType || 'toman',
@@ -71,18 +90,44 @@ export class NewProductService {
           productData.sellingPrice,
           productData.commission,
           productData.fulfillmentAndDeliveryCost,
-          productData.labelCost || 4000,
-          productData.wareHousingCost || 6000,
+          productData.labelCost,
+          productData.wareHousingCost,
           productData.currencyType || 'toman',
-        )
+        ),
+        totalCost: calculateDigiKalaCosts(
+          productData.sellingPrice,
+          productData.commission || 0,
+          productData.fulfillmentAndDeliveryCost || 0,
+          (productData.currencyType = 'toman'),
+          productData.labelCost,
+          productData.wareHousingCost,
+        ),
       });
       await this.digikalaCostRepository.save(digikalaCost);
 
       // Create and save NewProduct
       const product = this.newProductRepository.create({
         ...productData,
-        initialCost, // Link InitialCost
-        digikalaCost, // Link DigikalaCost
+        netProfit: calculateNetProfit(
+          productData.currencyRate,
+          productData.buyingPrice || 0,
+          productData.shippingCost || 0,
+          productData.cargoCost || 0,
+          productData.sellingPrice,
+          digikalaCost.totalCost,
+          (productData.currencyType = 'toman'),
+        ),
+        profitPercentage: calculateProfitPercentage(
+          productData.currencyRate,
+          productData.buyingPrice || 0,
+          productData.shippingCost || 0,
+          productData.cargoCost || 0,
+          productData.sellingPrice,
+          digikalaCost.totalCost,
+          (productData.currencyType = 'toman'),
+        ),
+        initialCost,
+        digikalaCost,
       });
 
       return await this.newProductRepository.save(product);

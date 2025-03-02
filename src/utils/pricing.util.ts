@@ -38,8 +38,8 @@ export const calculateDigiKalaCosts = (
   commission: number,
   fulfillmentAndDeliveryCost: number,
   currencyType: "rial" | "toman",
-  labelCost = 4000,
-  warehousing = 6000
+  labelCost,
+  warehousing
 ) => {
   let commissionFee = calculateComissionFee(sellingPrice, currencyType, commission);
   let fulfillmentAndDeliveryCostToman = (currencyType == 'rial') ? Number(fulfillmentAndDeliveryCost) / 10 : Number(fulfillmentAndDeliveryCost);
@@ -67,7 +67,7 @@ export const calculateInitialCosts = (
 };
 
 export const calculateNetProfit = (
-  selectedCurrency: number,
+  currencyRate: number,
   buyingPrice: number,
   shippingCost: number,
   cargoCostPercentage: number,
@@ -76,7 +76,7 @@ export const calculateNetProfit = (
   type: "rial" | "toman"
 ): number => {
   let profitPercentage = calculateProfitPercentage(
-    selectedCurrency,
+    currencyRate,
     buyingPrice || 0,
     shippingCost || 0,
     cargoCostPercentage || 0,
@@ -85,12 +85,12 @@ export const calculateNetProfit = (
     type
   );
   let buyingPriceInToman = type == "rial" ? Number(buyingPrice) / 10 : Number(buyingPrice);
-  let finalBuyingPrice = buyingPriceInToman * selectedCurrency;
+  let finalBuyingPrice = buyingPriceInToman * currencyRate;
   return (finalBuyingPrice * profitPercentage) / 100;
 };
 
 export const calculateProfitPercentage = (
-  selectedCurrency: number,
+  currencyRate: number,
   buyingPrice: number,
   shippingCost: number,
   cargoCostPercentage: number,
@@ -99,7 +99,7 @@ export const calculateProfitPercentage = (
   type: "rial" | "toman"
 ): number => {
   let convertedBuyingPrice = type == "rial" ? Number(buyingPrice) / 10 : Number(buyingPrice);
-  let buyingPriceInToman = convertedBuyingPrice * selectedCurrency;
+  let buyingPriceInToman = convertedBuyingPrice * currencyRate;
   let finalCargoCost = (buyingPriceInToman * Number(cargoCostPercentage)) / 100;
   let convertedShippingInToman = type == "rial" ? Number(shippingCost) / 10 : Number(shippingCost);
   let finalBuyingPrice = buyingPriceInToman + convertedShippingInToman + finalCargoCost;

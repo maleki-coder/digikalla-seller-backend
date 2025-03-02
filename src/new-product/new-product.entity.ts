@@ -2,9 +2,10 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  PrimaryGeneratedColumn,
   OneToOne,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
+
 import { CurrencyType } from 'src/types/global.types';
 import { DigikalaCost } from 'src/digikala-cost/digikala-cost.entity';
 import { InitialCost } from 'src/initial-cost/initial-cost.entity';
@@ -22,10 +23,16 @@ export class NewProduct {
 
   @Column('decimal', { precision: 20, scale: 1 })
   sellingPrice: number;
- 
+
+  @Column('decimal', { precision: 20, scale: 1 })
+  netProfit: number;
+
+  @Column('decimal', { precision: 20, scale: 1 })
+  profitPercentage: number;
+
   @OneToOne(() => DigikalaCost, (digikalaCost) => digikalaCost.product)
   digikalaCost: DigikalaCost;
-  
+
   @OneToOne(() => InitialCost, (initialCost) => initialCost.product)
   initialCost: InitialCost;
 
