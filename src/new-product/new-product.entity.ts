@@ -3,9 +3,11 @@ import {
   CreateDateColumn,
   Entity,
   PrimaryGeneratedColumn,
+  OneToOne,
 } from 'typeorm';
-
 import { CurrencyType } from 'src/types/global.types';
+import { DigikalaCost } from 'src/digikala-cost/digikala-cost.entity';
+import { InitialCost } from 'src/initial-cost/initial-cost.entity';
 
 @Entity()
 export class NewProduct {
@@ -19,40 +21,13 @@ export class NewProduct {
   currencyType: CurrencyType;
 
   @Column('decimal', { precision: 20, scale: 1 })
-  buyingPrice: number;
-
-  @Column('decimal', { precision: 20, scale: 1,nullable: true  })
-  shippingCost: number;
-
-  @Column('decimal', { precision: 20, scale: 1, nullable: true })
-  cargoCost: number;
-
-  @Column('decimal', { precision: 20, scale: 1 })
   sellingPrice: number;
-
-  @Column('decimal', { precision: 20, scale: 1 })
-  commission: number;
-
-  @Column('decimal', { precision: 20, scale: 1 })
-  commissionFee: number;
-
-  @Column('decimal', { precision: 20, scale: 1 })
-  fulfillmentAndDeliveryCost: number;
-
-  @Column('decimal', { precision: 20, scale: 1 })
-  labelCost: number;
-
-  @Column('decimal', { precision: 20, scale: 1 })
-  taxCost: number;
-
-  @Column('decimal', { precision: 20, scale: 1 })
-  wareHousingCost: number;
-
-  @Column('decimal', { precision: 20, scale: 1 })
-  digikalaCost: number;
-
-  @Column('decimal', { precision: 20, scale: 1 })
-  currencyRate: number;
+ 
+  @OneToOne(() => DigikalaCost, (digikalaCost) => digikalaCost.product)
+  digikalaCost: DigikalaCost;
+  
+  @OneToOne(() => InitialCost, (initialCost) => initialCost.product)
+  initialCost: InitialCost;
 
   @CreateDateColumn({ type: 'timestamp', nullable: true })
   createdAt: Date;

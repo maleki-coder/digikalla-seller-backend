@@ -9,56 +9,82 @@ import { Repository } from 'typeorm';
 import { NewProduct } from './new-product.entity';
 import { calculateComissionFee, calculateVAT } from 'src/utils/pricing.util';
 import { normalizeArabicPersianNumbers } from 'src/utils/character.covertor';
+import { CreateProductData } from './new-product.dto';
+import { InitialCost } from 'src/initial-cost/initial-cost.entity';
+import { DigikalaCost } from 'src/digikala-cost/digikala-cost.entity';
 
 @Injectable()
 export class NewProductService {
   constructor(
     @InjectRepository(NewProduct)
     private readonly newProductRepository: Repository<NewProduct>,
-  ) {}
+    @InjectRepository(InitialCost)
+    private readonly initialCostRepository: Repository<InitialCost>, // Inject InitialCost repository
+    @InjectRepository(DigikalaCost)
+    private readonly digikalaCostRepository: Repository<DigikalaCost>, // Inject DigikalaCost repository
+  ) { }
 
-  async create(productData: Partial<NewProduct>): Promise<NewProduct> {
+  async create(productData: Partial<CreateProductData>): Promise<NewProduct> {
     try {
+      // Validate required fields
       if (
         !productData.title ||
-        !productData.buyingPrice ||
         !productData.sellingPrice ||
-        !productData.commission ||
-        !productData.fulfillmentAndDeliveryCost
+        !productData.currencyRate
       ) {
         throw new BadRequestException('Missing required fields');
       }
+
+      // Normalize title
       productData.title = normalizeArabicPersianNumbers(productData.title);
-      // Check if product with the same title or other unique field exists
+
+      // Check if product with the same title exists
       const existingProduct = await this.newProductRepository.findOne({
-        where: { title: productData.title }, // You can add more conditions here if needed (e.g., buyingPrice)
+        where: { title: productData.title },
       });
 
       if (existingProduct) {
         throw new BadRequestException('یک محصول با این عنوان وجود دارد');
       }
-      productData.taxCost = calculateVAT(
-        productData.sellingPrice,
-        productData.commission,
-        productData.fulfillmentAndDeliveryCost,
-        (productData.labelCost = 4000), // Default value
-        (productData.wareHousingCost = 6000), // Default value
-        (productData.currencyType = 'toman'), // Default value,
-      );
 
-      productData.commissionFee = calculateComissionFee(
-        productData.sellingPrice,
-        productData.currencyType || 'toman',
-        productData.commission,
-      );
-      if (
-        !productData.currencyRate ||
-        productData.currencyRate == 0 ||
-        productData.currencyRate < 0
-      ) {
-        throw new BadRequestException('نرخ ارز را به درستی وارد کنید');
-      }
-      const product = this.newProductRepository.create(productData);
+      // Create and save InitialCost
+      const initialCost = this.initialCostRepository.create({
+        buyingPrice: productData.buyingPrice || 0,
+        shippingCost: productData.shippingCost || 0,
+        cargoCost: productData.cargoCost || 0,
+        currencyRate: productData.currencyRate || 0,
+      });
+      await this.initialCostRepository.save(initialCost);
+
+      // Create and save DigikalaCost
+      const digikalaCost = this.digikalaCostRepository.create({
+        commission: productData.commission || 0,
+        fulfillmentAndDeliveryCost: productData.fulfillmentAndDeliveryCost || 0,
+        labelCost: productData.labelCost || 4000,
+        wareHousingCost: productData.wareHousingCost || 6000,
+        commissionFee: calculateComissionFee(
+          productData.sellingPrice,
+          productData.currencyType || 'toman',
+          productData.commission || 0,
+        ),
+        taxCost: calculateVAT(
+          productData.sellingPrice,
+          productData.commission,
+          productData.fulfillmentAndDeliveryCost,
+          productData.labelCost || 4000,
+          productData.wareHousingCost || 6000,
+          productData.currencyType || 'toman',
+        )
+      });
+      await this.digikalaCostRepository.save(digikalaCost);
+
+      // Create and save NewProduct
+      const product = this.newProductRepository.create({
+        ...productData,
+        initialCost, // Link InitialCost
+        digikalaCost, // Link DigikalaCost
+      });
+
       return await this.newProductRepository.save(product);
     } catch (error) {
       throw new InternalServerErrorException(`${error.message}`);

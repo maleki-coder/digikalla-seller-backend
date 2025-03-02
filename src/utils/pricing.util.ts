@@ -1,5 +1,11 @@
 import { CurrencyType } from "src/types/global.types";
 
+export const calculateComissionFee = (sellingPrice: number, currencyType: "toman" | "rial", commission: number) => {
+  let finalSellingPrice = currencyType == 'rial' ? Number(sellingPrice) / 10 : Number(sellingPrice);
+  let final = (Number(finalSellingPrice) * Number(commission)) / 100;
+  return final;
+}
+
 export const calculateVAT = (
   sellingPrice,
   commission,
@@ -15,26 +21,94 @@ export const calculateVAT = (
   );
   let fulfillmentAndDeliveryCostToman =
     currencyType == 'rial'
-      ? fulfillmentAndDeliveryCost / 10
-      : fulfillmentAndDeliveryCost;
+      ? Number(fulfillmentAndDeliveryCost) / 10
+      : Number(fulfillmentAndDeliveryCost);
   let final =
     ((commissionFee +
-      labelCost +
-      warehousing +
+      Number(labelCost) +
+      Number(warehousing) +
       Number(fulfillmentAndDeliveryCostToman) / 2) *
       10) /
     100;
   return final;
 };
 
-export const calculateComissionFee = (
-  sellingPrice,
-  currencyType: CurrencyType,
-  commission,
+export const calculateDigiKalaCosts = (
+  sellingPrice: number,
+  commission: number,
+  fulfillmentAndDeliveryCost: number,
+  currencyType: "rial" | "toman",
+  labelCost = 4000,
+  warehousing = 6000
 ) => {
-  let finalSellingPrice =
-    currencyType == 'rial' ? sellingPrice / 10 : sellingPrice;
-  let finalCommission =
-    (Number(finalSellingPrice) * Number(commission) * 100) / 100;
-  return finalCommission;
+  let commissionFee = calculateComissionFee(sellingPrice, currencyType, commission);
+  let fulfillmentAndDeliveryCostToman = (currencyType == 'rial') ? Number(fulfillmentAndDeliveryCost) / 10 : Number(fulfillmentAndDeliveryCost);
+  let tax = calculateVAT(sellingPrice, commission, fulfillmentAndDeliveryCost, labelCost, warehousing, currencyType);
+  return Math.round(
+    Number(fulfillmentAndDeliveryCostToman) +
+    Number(commissionFee) +
+    Number(tax) +
+    Number(labelCost) +
+    Number(warehousing)
+  );
 };
+
+export const calculateInitialCosts = (
+  buyingPrice: number,
+  shippingCosts: number,
+  cargoCosts: number,
+  currencyRate: number,
+  type: 'rial' | "toman"
+): number => {
+  let finalBuyingPrice = Number(buyingPrice) * Number(currencyRate);
+  let finalCargoCosts = (Number(cargoCosts) * finalBuyingPrice) / 100;
+  let finalShippingCosts = type == 'rial' ? Number(shippingCosts) / 10 : Number(shippingCosts);
+  return finalBuyingPrice + finalCargoCosts + finalShippingCosts;
+};
+
+export const calculateNetProfit = (
+  selectedCurrency: number,
+  buyingPrice: number,
+  shippingCost: number,
+  cargoCostPercentage: number,
+  sellingPrice: number,
+  digikalaCosts: number,
+  type: "rial" | "toman"
+): number => {
+  let profitPercentage = calculateProfitPercentage(
+    selectedCurrency,
+    buyingPrice || 0,
+    shippingCost || 0,
+    cargoCostPercentage || 0,
+    sellingPrice || 0,
+    digikalaCosts || 0,
+    type
+  );
+  let buyingPriceInToman = type == "rial" ? Number(buyingPrice) / 10 : Number(buyingPrice);
+  let finalBuyingPrice = buyingPriceInToman * selectedCurrency;
+  return (finalBuyingPrice * profitPercentage) / 100;
+};
+
+export const calculateProfitPercentage = (
+  selectedCurrency: number,
+  buyingPrice: number,
+  shippingCost: number,
+  cargoCostPercentage: number,
+  sellingPrice: number,
+  digikalaCosts: number,
+  type: "rial" | "toman"
+): number => {
+  let convertedBuyingPrice = type == "rial" ? Number(buyingPrice) / 10 : Number(buyingPrice);
+  let buyingPriceInToman = convertedBuyingPrice * selectedCurrency;
+  let finalCargoCost = (buyingPriceInToman * Number(cargoCostPercentage)) / 100;
+  let convertedShippingInToman = type == "rial" ? Number(shippingCost) / 10 : Number(shippingCost);
+  let finalBuyingPrice = buyingPriceInToman + convertedShippingInToman + finalCargoCost;
+  let sellingPriceInToman = type == "rial" ? Number(sellingPrice) / 10 : Number(sellingPrice);
+  let digikalaCostsInToman = type == "rial" ? Number(digikalaCosts) / 10 : Number(digikalaCosts);
+  let finalSellingPrice = sellingPriceInToman - digikalaCostsInToman;
+  let finalProfit = finalSellingPrice - finalBuyingPrice;
+  // if (finalProfit && finalBuyingPrice) {
+    return Math.round((finalProfit / finalBuyingPrice) * 100);
+  // }
+};
+
