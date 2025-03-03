@@ -138,7 +138,9 @@ export class NewProductService {
 
   async findAll(): Promise<NewProduct[]> {
     try {
-      return await this.newProductRepository.find();
+      return await this.newProductRepository.find({
+        relations : ['initialCost' , 'digikalaCost']
+      });
     } catch (error) {
       throw new InternalServerErrorException(
         `Failed to retrieve products: ${error.message}`,
