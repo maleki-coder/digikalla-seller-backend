@@ -1,10 +1,15 @@
-import { CurrencyType } from "src/types/global.types";
+import { CurrencyType } from 'src/types/global.types';
 
-export const calculateComissionFee = (sellingPrice: number, currencyType: "toman" | "rial", commission: number) => {
-  let finalSellingPrice = currencyType == 'rial' ? Number(sellingPrice) / 10 : Number(sellingPrice);
+export const calculateComissionFee = (
+  sellingPrice: number,
+  currencyType: 'toman' | 'rial',
+  commission: number,
+) => {
+  let finalSellingPrice =
+    currencyType == 'rial' ? Number(sellingPrice) / 10 : Number(sellingPrice);
   let final = (Number(finalSellingPrice) * Number(commission)) / 100;
   return final;
-}
+};
 
 export const calculateVAT = (
   sellingPrice,
@@ -37,19 +42,33 @@ export const calculateDigiKalaCosts = (
   sellingPrice: number,
   commission: number,
   fulfillmentAndDeliveryCost: number,
-  currencyType: "rial" | "toman",
+  currencyType: 'rial' | 'toman',
   labelCost,
-  warehousing
+  warehousing,
 ) => {
-  let commissionFee = calculateComissionFee(sellingPrice, currencyType, commission);
-  let fulfillmentAndDeliveryCostToman = (currencyType == 'rial') ? Number(fulfillmentAndDeliveryCost) / 10 : Number(fulfillmentAndDeliveryCost);
-  let tax = calculateVAT(sellingPrice, commission, fulfillmentAndDeliveryCost, labelCost, warehousing, currencyType);
+  let commissionFee = calculateComissionFee(
+    sellingPrice,
+    currencyType,
+    commission,
+  );
+  let fulfillmentAndDeliveryCostToman =
+    currencyType == 'rial'
+      ? Number(fulfillmentAndDeliveryCost) / 10
+      : Number(fulfillmentAndDeliveryCost);
+  let tax = calculateVAT(
+    sellingPrice,
+    commission,
+    fulfillmentAndDeliveryCost,
+    labelCost,
+    warehousing,
+    currencyType,
+  );
   return Math.round(
     Number(fulfillmentAndDeliveryCostToman) +
-    Number(commissionFee) +
-    Number(tax) +
-    Number(labelCost) +
-    Number(warehousing)
+      Number(commissionFee) +
+      Number(tax) +
+      Number(labelCost) +
+      Number(warehousing),
   );
 };
 
@@ -58,11 +77,12 @@ export const calculateInitialCosts = (
   shippingCosts: number,
   cargoCosts: number,
   currencyRate: number,
-  type: 'rial' | "toman"
+  type: 'rial' | 'toman',
 ): number => {
   let finalBuyingPrice = Number(buyingPrice) * Number(currencyRate);
   let finalCargoCosts = (Number(cargoCosts) * finalBuyingPrice) / 100;
-  let finalShippingCosts = type == 'rial' ? Number(shippingCosts) / 10 : Number(shippingCosts);
+  let finalShippingCosts =
+    type == 'rial' ? Number(shippingCosts) / 10 : Number(shippingCosts);
   return finalBuyingPrice + finalCargoCosts + finalShippingCosts;
 };
 
@@ -73,7 +93,7 @@ export const calculateNetProfit = (
   cargoCostPercentage: number,
   sellingPrice: number,
   digikalaCosts: number,
-  type: "rial" | "toman"
+  type: 'rial' | 'toman',
 ): number => {
   let profitPercentage = calculateProfitPercentage(
     currencyRate,
@@ -82,10 +102,15 @@ export const calculateNetProfit = (
     cargoCostPercentage || 0,
     sellingPrice || 0,
     digikalaCosts || 0,
-    type
+    type,
   );
-  let buyingPriceInToman = type == "rial" ? Number(buyingPrice) / 10 : Number(buyingPrice);
-  let finalBuyingPrice = buyingPriceInToman * currencyRate;
+  let finalBuyingPrice = calculateInitialCosts(
+    buyingPrice,
+    shippingCost,
+    cargoCostPercentage,
+    currencyRate,
+    type,
+  );
   return (finalBuyingPrice * profitPercentage) / 100;
 };
 
@@ -96,19 +121,38 @@ export const calculateProfitPercentage = (
   cargoCostPercentage: number,
   sellingPrice: number,
   digikalaCosts: number,
-  type: "rial" | "toman"
+  type: 'rial' | 'toman',
 ): number => {
-  let convertedBuyingPrice = type == "rial" ? Number(buyingPrice) / 10 : Number(buyingPrice);
-  let buyingPriceInToman = convertedBuyingPrice * currencyRate;
-  let finalCargoCost = (buyingPriceInToman * Number(cargoCostPercentage)) / 100;
-  let convertedShippingInToman = type == "rial" ? Number(shippingCost) / 10 : Number(shippingCost);
-  let finalBuyingPrice = buyingPriceInToman + convertedShippingInToman + finalCargoCost;
-  let sellingPriceInToman = type == "rial" ? Number(sellingPrice) / 10 : Number(sellingPrice);
-  let digikalaCostsInToman = type == "rial" ? Number(digikalaCosts) / 10 : Number(digikalaCosts);
+  let finalBuyingPrice = calculateInitialCosts(
+    buyingPrice,
+    shippingCost,
+    cargoCostPercentage,
+    currencyRate,
+    type,
+  );
+  let sellingPriceInToman =
+    type == 'rial' ? Number(sellingPrice) / 10 : Number(sellingPrice);
+  let digikalaCostsInToman =
+    type == 'rial' ? Number(digikalaCosts) / 10 : Number(digikalaCosts);
   let finalSellingPrice = sellingPriceInToman - digikalaCostsInToman;
   let finalProfit = finalSellingPrice - finalBuyingPrice;
   // if (finalProfit && finalBuyingPrice) {
-    return Math.round((finalProfit / finalBuyingPrice) * 100);
+  return Math.round((finalProfit / finalBuyingPrice) * 100);
   // }
 };
 
+export const calculateFinalBuyingPrice = (
+  currencyRate: number,
+  buyingPrice: number,
+  cargoCost: number,
+  shippingCost: number,
+  type: 'rial' | 'toman',
+) => {
+  let convertedBuyingPrice =
+    type == 'rial' ? Number(buyingPrice) / 10 : Number(buyingPrice);
+  let buyingPriceInToman = convertedBuyingPrice * currencyRate;
+  let finalCargoCost = (buyingPriceInToman * Number(cargoCost)) / 100;
+  let convertedShippingInToman =
+    type == 'rial' ? Number(shippingCost) / 10 : Number(shippingCost);
+  return buyingPriceInToman + convertedShippingInToman + finalCargoCost;
+};

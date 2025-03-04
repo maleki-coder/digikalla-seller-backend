@@ -41,10 +41,10 @@ export class NewProductService {
         throw new BadRequestException('عنوان کالا را وارد کنید');
       }
       if (!productData.buyingPrice) {
-        throw new BadRequestException('قیمت خرید را وارد کنید')
+        throw new BadRequestException('قیمت خرید را وارد کنید');
       }
       if (!productData.sellingPrice) {
-        throw new BadRequestException('قیمت فروش را وارد کنید')
+        throw new BadRequestException('قیمت فروش را وارد کنید');
       }
 
       // Normalize title
@@ -139,7 +139,7 @@ export class NewProductService {
   async findAll(): Promise<NewProduct[]> {
     try {
       return await this.newProductRepository.find({
-        relations : ['initialCost' , 'digikalaCost']
+        relations: ['initialCost', 'digikalaCost'],
       });
     } catch (error) {
       throw new InternalServerErrorException(
