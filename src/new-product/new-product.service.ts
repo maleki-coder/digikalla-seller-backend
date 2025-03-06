@@ -143,7 +143,7 @@ export class NewProductService {
       });
     } catch (error) {
       throw new InternalServerErrorException(
-        `Failed to retrieve products: ${error.message}`,
+        `خطا در دریافت اطلاعات: ${error.message}`,
       );
     }
   }

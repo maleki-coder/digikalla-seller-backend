@@ -15,22 +15,24 @@ export class NewProduct {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ nullable: true })
+  @Column()
   title: string;
 
   @Column()
   currencyType: CurrencyType;
 
-  @Column('decimal', { precision: 20, scale: 1 })
+  @Column('decimal', { precision: 20, scale: 1, nullable: true })
   sellingPrice: number;
 
-  @Column('decimal', { precision: 20, scale: 1 })
+  @Column('decimal', { precision: 20, scale: 1, nullable: true })
   netProfit: number;
 
-  @Column('decimal', { precision: 20, scale: 1 })
+  @Column('decimal', { precision: 20, scale: 1, nullable: true })
   profitPercentage: number;
 
-  @OneToOne(() => DigikalaCost, (digikalaCost) => digikalaCost.product)
+  @OneToOne(() => DigikalaCost, (digikalaCost) => digikalaCost.product, {
+    nullable: true,
+  })
   digikalaCost: DigikalaCost;
 
   @OneToOne(() => InitialCost, (initialCost) => initialCost.product)
@@ -38,4 +40,7 @@ export class NewProduct {
 
   @CreateDateColumn({ type: 'timestamp', nullable: true })
   createdAt: Date;
+
+  @Column()
+  isNewProduct: boolean;
 }
