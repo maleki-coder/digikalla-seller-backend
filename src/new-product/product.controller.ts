@@ -7,33 +7,34 @@ import {
   Put,
   Delete,
 } from '@nestjs/common';
-import { NewProductService } from './new-product.service';
-import { NewProduct } from './new-product.entity';
+import { ProductService } from './product.service';
+import { Product } from './product.entity';
+import { Product as IProduct } from './product.dto';
 
-@Controller('new-product')
-export class NewProductController {
-  constructor(private readonly productService: NewProductService) {}
+@Controller('api/product')
+export class ProductController {
+  constructor(private readonly productService: ProductService) {}
 
   @Post()
-  async create(@Body() productData: Partial<NewProduct>): Promise<NewProduct> {
+  async create(@Body() productData: Partial<IProduct>): Promise<Product> {
     return await this.productService.create(productData);
   }
 
   @Get()
-  async findAll(): Promise<NewProduct[]> {
+  async findAll(): Promise<Product[]> {
     return await this.productService.findAll();
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: number): Promise<NewProduct> {
+  async findOne(@Param('id') id: number): Promise<Product> {
     return await this.productService.findOne(id);
   }
 
   @Put(':id')
   async update(
     @Param('id') id: number,
-    @Body() productData: Partial<NewProduct>,
-  ): Promise<NewProduct> {
+    @Body() productData: Partial<Product>,
+  ): Promise<Product> {
     return await this.productService.update(id, productData);
   }
 

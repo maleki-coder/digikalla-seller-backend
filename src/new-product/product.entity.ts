@@ -11,11 +11,14 @@ import { DigikalaCost } from 'src/digikala-cost/digikala-cost.entity';
 import { InitialCost } from 'src/initial-cost/initial-cost.entity';
 
 @Entity()
-export class NewProduct {
+export class Product {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({nullable : true})
+  dkp: number;
+
+  @Column({nullable : true})
   title: string;
 
   @Column()

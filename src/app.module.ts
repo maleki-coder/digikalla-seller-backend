@@ -1,11 +1,9 @@
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { DigikalaCost } from './digikala-cost/digikala-cost.entity';
 import { InitialCost } from './initial-cost/initial-cost.entity';
 import { Module } from '@nestjs/common';
-import { NewProduct } from './new-product/new-product.entity';
-import { NewProductController } from './new-product/new-product.controller';
-import { NewProductService } from './new-product/new-product.service';
+import { Product } from './new-product/product.entity';
+import { ProductController } from './new-product/product.controller';
+import { ProductService } from './new-product/product.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
@@ -17,12 +15,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       username: 'postgres',
       password: 'admin',
       database: 'digikala-seller',
-      entities: [NewProduct,InitialCost, DigikalaCost],
+      entities: [Product, InitialCost, DigikalaCost],
       synchronize: true,
     }),
-    TypeOrmModule.forFeature([NewProduct,InitialCost, DigikalaCost]),
+    TypeOrmModule.forFeature([Product, InitialCost, DigikalaCost]),
   ],
-  controllers: [AppController, NewProductController],
-  providers: [AppService, NewProductService],
+  controllers: [ProductController],
+  providers: [ProductService],
 })
-export class AppModule { }
+export class AppModule {}

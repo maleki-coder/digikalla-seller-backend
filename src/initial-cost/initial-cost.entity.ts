@@ -7,7 +7,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
-import { NewProduct } from 'src/new-product/new-product.entity';
+import { Product } from 'src/new-product/product.entity';
 
 @Entity()
 export class InitialCost {
@@ -32,7 +32,7 @@ export class InitialCost {
   @CreateDateColumn({ type: 'timestamp', nullable: true })
   createdAt: Date;
 
-  @OneToOne(() => NewProduct, (product) => product.initialCost)
+  @OneToOne(() => Product, (product) => product.initialCost)
   @JoinColumn({ name: 'productId' })
-  product: NewProduct;
+  product: Product;
 }
