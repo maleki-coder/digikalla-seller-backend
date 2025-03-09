@@ -44,6 +44,8 @@ export interface IExistingProduct {
   currencyType: ICurrencyType;
 }
 export interface INewProduct {
+  id?: number;
+  dkp?: number;
   isNewProduct: true;
   title: string;
   digikalaCost: IDigikalaCost;

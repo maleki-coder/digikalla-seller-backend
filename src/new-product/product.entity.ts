@@ -9,16 +9,17 @@ import {
 import { CurrencyType } from 'src/types/global.types';
 import { DigikalaCost } from 'src/digikala-cost/digikala-cost.entity';
 import { InitialCost } from 'src/initial-cost/initial-cost.entity';
+import { SellingProfit } from 'src/selling-profit/selling-product.entity';
 
 @Entity()
 export class Product {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({nullable : true})
+  @Column({ nullable: true })
   dkp: number;
 
-  @Column({nullable : true})
+  @Column({ nullable: true })
   title: string;
 
   @Column()
@@ -27,11 +28,8 @@ export class Product {
   @Column('decimal', { precision: 20, scale: 1, nullable: true })
   sellingPrice: number;
 
-  @Column('decimal', { precision: 20, scale: 1, nullable: true })
-  netProfit: number;
-
-  @Column('decimal', { precision: 20, scale: 1, nullable: true })
-  profitPercentage: number;
+  @OneToOne(() => SellingProfit, (SellingProfit) => SellingProfit.product)
+  profit: SellingProfit;
 
   @OneToOne(() => DigikalaCost, (digikalaCost) => digikalaCost.product, {
     nullable: true,

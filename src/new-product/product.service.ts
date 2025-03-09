@@ -11,7 +11,7 @@ import { INewProduct, Product as IProduct } from './product.dto';
 import { InitialCost } from 'src/initial-cost/initial-cost.entity';
 import { DigikalaCost } from 'src/digikala-cost/digikala-cost.entity';
 import { Product } from './product.entity';
-
+import { SellingProfit } from 'src/selling-profit/selling-product.entity';
 @Injectable()
 export class ProductService {
   constructor(
@@ -21,7 +21,9 @@ export class ProductService {
     private readonly initialCostRepository: Repository<InitialCost>,
     @InjectRepository(DigikalaCost)
     private readonly digikalaCostRepository: Repository<DigikalaCost>,
-  ) {}
+    @InjectRepository(SellingProfit)
+    private readonly sellingProfitRepository: Repository<SellingProfit>,
+  ) { }
 
   async create(productData: Partial<IProduct>): Promise<Product> {
     try {
@@ -42,21 +44,29 @@ export class ProductService {
       }
 
       if (!productData.isNewProduct) {
-         // Create and save InitialCost
-      const initialCost = this.initialCostRepository.create({
-        buyingPrice: productData.initialCost?.buyingPrice,
-        shippingCost: productData.initialCost?.shippingCost,
-        cargoCost: productData.initialCost?.cargoCost,
-        currencyRate: productData.initialCost?.currencyRate,
-        totalCost: productData.initialCost?.totalCost,
-      });
-      // Create and save Product
-      const product = this.productRepository.create({
-        ...productData,
-        initialCost
-      });
-      await this.initialCostRepository.save(initialCost);
-      return await this.productRepository.save(product);
+        // Check if product with the same title exists
+        const existingProduct = await this.productRepository.findOne({
+          where: { dkp: productData.dkp },
+        });
+
+        if (existingProduct) {
+          throw new BadRequestException('یک محصول با این کد وجود دارد');
+        }
+        // Create and save InitialCost
+        const initialCost = this.initialCostRepository.create({
+          buyingPrice: productData.initialCost?.buyingPrice,
+          shippingCost: productData.initialCost?.shippingCost,
+          cargoCost: productData.initialCost?.cargoCost,
+          currencyRate: productData.initialCost?.currencyRate,
+          totalCost: productData.initialCost?.totalCost,
+        });
+        // Create and save Product
+        await this.initialCostRepository.save(initialCost);
+        const product = this.productRepository.create({
+          ...productData,
+          initialCost
+        });
+        return await this.productRepository.save(product);
       }
       // Normalize title
 
@@ -93,12 +103,16 @@ export class ProductService {
       });
       await this.digikalaCostRepository.save(digikalaCost);
 
-      // Create and save Product
-      const product = this.productRepository.create({
-        ...productData,
+      const profit = this.sellingProfitRepository.create({
         netProfit: (productData as INewProduct)?.profit.netProfit,
         profitPercentage: (productData as INewProduct)?.profit
           ?.percentageProfit,
+      })
+      await this.sellingProfitRepository.save(profit);
+      // Create and save Product
+      const product = this.productRepository.create({
+        ...productData,
+        profit,
         initialCost,
         digikalaCost,
       });
@@ -109,11 +123,17 @@ export class ProductService {
     }
   }
 
-  async findAll(): Promise<Product[]> {
+  async findAll(isNewProduct?: boolean): Promise<Product[]> {
     try {
-      return await this.productRepository.find({
-        relations: ['initialCost', 'digikalaCost'],
-      });
+      const queryOptions: any = {
+        relations: ['initialCost', 'digikalaCost', 'profit'],
+      };
+
+      if (isNewProduct !== undefined) {
+        queryOptions.where = { isNewProduct };
+      }
+
+      return await this.productRepository.find(queryOptions);
     } catch (error) {
       throw new InternalServerErrorException(
         `خطا در دریافت اطلاعات: ${error.message}`,

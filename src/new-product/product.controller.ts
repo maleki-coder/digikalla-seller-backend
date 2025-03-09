@@ -6,6 +6,7 @@ import {
   Param,
   Put,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { Product } from './product.entity';
@@ -21,8 +22,8 @@ export class ProductController {
   }
 
   @Get()
-  async findAll(): Promise<Product[]> {
-    return await this.productService.findAll();
+  async findAll(@Query('isNewProduct') isNewProduct?: boolean): Promise<Product[]> {
+    return await this.productService.findAll(isNewProduct);
   }
 
   @Get(':id')

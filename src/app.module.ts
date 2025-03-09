@@ -5,6 +5,7 @@ import { Product } from './new-product/product.entity';
 import { ProductController } from './new-product/product.controller';
 import { ProductService } from './new-product/product.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { SellingProfit } from './selling-profit/selling-product.entity';
 
 @Module({
   imports: [
@@ -13,14 +14,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: 'admin',
-      database: 'digikala-seller',
-      entities: [Product, InitialCost, DigikalaCost],
+      password: '1234',
+      database: 'digikala',
+      entities: [Product, SellingProfit, InitialCost, DigikalaCost],
       synchronize: true,
     }),
-    TypeOrmModule.forFeature([Product, InitialCost, DigikalaCost]),
+    TypeOrmModule.forFeature([Product, SellingProfit, InitialCost, DigikalaCost]),
   ],
   controllers: [ProductController],
   providers: [ProductService],
 })
-export class AppModule {}
+export class AppModule { }
