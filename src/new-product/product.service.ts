@@ -12,6 +12,8 @@ import { InitialCost } from 'src/initial-cost/initial-cost.entity';
 import { DigikalaCost } from 'src/digikala-cost/digikala-cost.entity';
 import { Product } from './product.entity';
 import { SellingProfit } from 'src/selling-profit/selling-product.entity';
+import { lastValueFrom } from 'rxjs';
+import { HttpService } from '@nestjs/axios';
 @Injectable()
 export class ProductService {
   constructor(
@@ -23,7 +25,8 @@ export class ProductService {
     private readonly digikalaCostRepository: Repository<DigikalaCost>,
     @InjectRepository(SellingProfit)
     private readonly sellingProfitRepository: Repository<SellingProfit>,
-  ) { }
+    private readonly httpService: HttpService,
+  ) {}
 
   async create(productData: Partial<IProduct>): Promise<Product> {
     try {
@@ -64,7 +67,7 @@ export class ProductService {
         await this.initialCostRepository.save(initialCost);
         const product = this.productRepository.create({
           ...productData,
-          initialCost
+          initialCost,
         });
         return await this.productRepository.save(product);
       }
@@ -107,7 +110,7 @@ export class ProductService {
         netProfit: (productData as INewProduct)?.profit.netProfit,
         profitPercentage: (productData as INewProduct)?.profit
           ?.percentageProfit,
-      })
+      });
       await this.sellingProfitRepository.save(profit);
       // Create and save Product
       const product = this.productRepository.create({
@@ -133,7 +136,45 @@ export class ProductService {
         queryOptions.where = { isNewProduct };
       }
 
-      return await this.productRepository.find(queryOptions);
+      const products = await this.productRepository.find(queryOptions);
+
+      await Promise.all(
+        products.map(async (product) => {
+          if (!product.isNewProduct) {
+            try {
+              const dkp = product.dkp; // Ensure product has a 'dkp' property
+              const DIGIKALA_BASE_URL = 'https://api.digikala.com'; // Replace with actual base URL
+              const SELLER_BASE_URL = 'https://seller.digikala.com'; // Replace with actual base URL
+              const PRODUCT_INFO_URL = `${DIGIKALA_BASE_URL}/v2/product/${dkp}/`;
+              const SELLING_INFO_URL = `${SELLER_BASE_URL}/api/v2/product-creation/be-seller/${dkp}`;
+              const AUTH_TOKEN =
+                'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzM4NCJ9.eyJ0b2tlbl9pZCI6MjQxOTI5OTMsInNlbGxlcl9pZCI6MTUzOTEyOSwicGF5bG9hZCI6eyJ1c2VybmFtZSI6Ijk4OTkxMDcxMTg3MiIsInJlZ2lzdGVyX3Bob25lIjoiOTg5OTEwNzExODcyIiwiZW1haWwiOiJuYWFiaWNvLnRyYWRlQGdtYWlsLmNvbSIsImJ1c2luZXNzX25hbWUiOiJcdTA2MzNcdTA2MmFcdTA2MjdcdTA2MzFcdTA2NDcgXHUwNjQ2XHUwNjM0XHUwNjI3XHUwNjQ2IFx1MDYyYVx1MDYyY1x1MDYyN1x1MDYzMVx1MDYyYSIsImZpcnN0X25hbWUiOiJcdTA2NDVcdTA2MmRcdTA2NDVcdTA2MmYiLCJsYXN0X25hbWUiOiJcdTA2NDVcdTA2NDRcdTA2NDNcdTA2NGEiLCJjb21wYW55X25hbWUiOm51bGwsInZlcmlmaWVkX2J5X290cCI6WyI5ODk5MTA3MTE4NzIiXX0sImV4cCI6MTc0MTc5ODE0Mn0.r9p3RBwwkOK6u-LYBwhU4nsR6d7uJYEUxKeaJDbCVw4pzwOO1Ptgy6Z2nzR2_3ch'; // Store in config
+
+              const [productInfo, sellingInfo] = await Promise.all([
+                lastValueFrom(this.httpService.get<any>(PRODUCT_INFO_URL)),
+                lastValueFrom(
+                  this.httpService.get<any>(SELLING_INFO_URL, {
+                    headers: { Authorization: AUTH_TOKEN },
+                  }),
+                ),
+              ]);
+
+              // Attach data to product (extend Product type if necessary)
+              Object.assign(product, {
+                externalProductInfo: productInfo.data,
+                externalSellingInfo: sellingInfo.data,
+              });
+            } catch (error) {
+              console.error(
+                `Error fetching data for product ${product.id}:`,
+                error.message,
+              );
+            }
+          }
+        }),
+      );
+
+      return products;
     } catch (error) {
       throw new InternalServerErrorException(
         `خطا در دریافت اطلاعات: ${error.message}`,
