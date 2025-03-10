@@ -129,17 +129,24 @@ export class ProductService {
     }
   }
 
-  async findAll(isNewProduct?: boolean): Promise<Product[] | IExistingProduct[]> {
+  async findAll(isNewProduct?: string): Promise<Product[] | IExistingProduct[]> {
     try {
       const queryOptions: any = {
         relations: ['initialCost', 'digikalaCost', 'profit'],
       };
 
+      const isNewProductBoolean = isNewProduct === 'true';
+
       if (isNewProduct !== undefined) {
-        queryOptions.where = { isNewProduct };
+        queryOptions.where = { isNewProduct: isNewProductBoolean };
       }
 
       const products = await this.productRepository.find(queryOptions);
+
+      // If isNewProduct is true, return the products directly
+      if (isNewProductBoolean) {
+        return products; // Return as Product[]
+      }
       const results: IExistingProduct[] = [];
       await Promise.all(
         products.map(async (product) => {
@@ -164,15 +171,8 @@ export class ProductService {
               const convertedData = convertDigiKalaDataForColumn(
                 productInfo.data,
                 sellingInfo.data,
-                product.initialCost,
-                product.digikalaCost
+                product.initialCost
               );
-  
-              // Attach data to product (extend Product type if necessary)
-              // Object.assign(product, {
-              //   productInfo: convertDigiKalaDataForColumn(productInfo.data, sellingInfo.data, product.initialCost, product.digikalaCost),
-              //   // externalSellingInfo: sellingInfo.data,
-              // });
               results.push(convertedData)
             } catch (error) {
               throw new InternalServerErrorException(

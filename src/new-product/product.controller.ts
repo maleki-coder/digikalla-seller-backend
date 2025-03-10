@@ -14,7 +14,7 @@ import { IExistingProduct, Product as IProduct } from './product.dto';
 
 @Controller('api/product')
 export class ProductController {
-  constructor(private readonly productService: ProductService) {}
+  constructor(private readonly productService: ProductService) { }
 
   @Post()
   async create(@Body() productData: Partial<IProduct>): Promise<Product> {
@@ -22,7 +22,7 @@ export class ProductController {
   }
 
   @Get()
-  async findAll(@Query('isNewProduct') isNewProduct?: boolean): Promise<Product[] | IExistingProduct[]> {
+  async findAll(@Query('isNewProduct') isNewProduct?: string): Promise<Product[] | IExistingProduct[]> {
     return await this.productService.findAll(isNewProduct);
   }
 

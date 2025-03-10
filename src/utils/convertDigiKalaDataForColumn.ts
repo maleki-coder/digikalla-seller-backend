@@ -5,13 +5,11 @@ import { calculateComissionFee, calculateDigiKalaCosts, calculateNetProfit, calc
 import { findPriceRange } from "./findPriceRange";
 import { LabelCost } from "src/types/labelCost.enum";
 import { InitialCost } from "src/initial-cost/initial-cost.entity";
-import { DigikalaCost } from "src/digikala-cost/digikala-cost.entity";
 
 export const convertDigiKalaDataForColumn = (
     productInfo: IFetchProductResponseDto,
     productSellingInfo: IGetProductSellingInfo,
-    initialCost: InitialCost,
-    digikalaCost: DigikalaCost
+    initialCost: InitialCost
 ): IExistingProduct => {
     // Helper function to calculate Digikala costs
     const calculateCosts = (price: number) => ({
