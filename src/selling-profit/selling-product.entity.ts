@@ -5,11 +5,11 @@ import {
     JoinColumn,
     OneToOne,
     PrimaryGeneratedColumn,
-  } from 'typeorm';
-  
-  import { Product } from 'src/new-product/product.entity';
-  
-  @Entity()
+} from 'typeorm';
+
+import { Product } from 'src/new-product/product.entity';
+
+@Entity()
   export class SellingProfit {
     @PrimaryGeneratedColumn()
     id: number;
@@ -18,7 +18,7 @@ import {
     netProfit: number;
   
     @Column('decimal', { precision: 20, scale: 1, nullable: true })
-    profitPercentage: number;
+    percentageProfit: number;
 
     @CreateDateColumn({ type: 'timestamp', nullable: true })
     createdAt: Date;

@@ -7,7 +7,12 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { normalizeArabicPersianNumbers } from 'src/utils/character.covertor';
-import { IExistingProduct, IInitialCost, INewProduct, Product as IProduct } from './product.dto';
+import {
+  IExistingProduct,
+  IInitialCost,
+  INewProduct,
+  Product as IProduct,
+} from './product.dto';
 import { InitialCost } from 'src/initial-cost/initial-cost.entity';
 import { DigikalaCost } from 'src/digikala-cost/digikala-cost.entity';
 import { Product } from './product.entity';
@@ -29,7 +34,7 @@ export class ProductService {
     @InjectRepository(SellingProfit)
     private readonly sellingProfitRepository: Repository<SellingProfit>,
     private readonly httpService: HttpService,
-  ) { }
+  ) {}
 
   async create(productData: Partial<IProduct>): Promise<Product> {
     try {
@@ -111,7 +116,7 @@ export class ProductService {
 
       const profit = this.sellingProfitRepository.create({
         netProfit: (productData as INewProduct)?.profit.netProfit,
-        profitPercentage: (productData as INewProduct)?.profit
+        percentageProfit: (productData as INewProduct)?.profit
           ?.percentageProfit,
       });
       await this.sellingProfitRepository.save(profit);
@@ -129,7 +134,9 @@ export class ProductService {
     }
   }
 
-  async findAll(isNewProduct?: string): Promise<Product[] | IExistingProduct[]> {
+  async findAll(
+    isNewProduct?: string,
+  ): Promise<Product[] | IExistingProduct[]> {
     try {
       const queryOptions: any = {
         relations: ['initialCost', 'digikalaCost', 'profit'],
@@ -161,19 +168,26 @@ export class ProductService {
                 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzM4NCJ9.eyJ0b2tlbl9pZCI6MjQxOTI5OTMsInNlbGxlcl9pZCI6MTUzOTEyOSwicGF5bG9hZCI6eyJ1c2VybmFtZSI6Ijk4OTkxMDcxMTg3MiIsInJlZ2lzdGVyX3Bob25lIjoiOTg5OTEwNzExODcyIiwiZW1haWwiOiJuYWFiaWNvLnRyYWRlQGdtYWlsLmNvbSIsImJ1c2luZXNzX25hbWUiOiJcdTA2MzNcdTA2MmFcdTA2MjdcdTA2MzFcdTA2NDcgXHUwNjQ2XHUwNjM0XHUwNjI3XHUwNjQ2IFx1MDYyYVx1MDYyY1x1MDYyN1x1MDYzMVx1MDYyYSIsImZpcnN0X25hbWUiOiJcdTA2NDVcdTA2MmRcdTA2NDVcdTA2MmYiLCJsYXN0X25hbWUiOiJcdTA2NDVcdTA2NDRcdTA2NDNcdTA2NGEiLCJjb21wYW55X25hbWUiOm51bGwsInZlcmlmaWVkX2J5X290cCI6WyI5ODk5MTA3MTE4NzIiXX0sImV4cCI6MTc0MTc5ODE0Mn0.r9p3RBwwkOK6u-LYBwhU4nsR6d7uJYEUxKeaJDbCVw4pzwOO1Ptgy6Z2nzR2_3ch'; // Store in config
 
               const [productInfo, sellingInfo] = await Promise.all([
-                lastValueFrom(this.httpService.get<IFetchProductResponseDto>(PRODUCT_INFO_URL)),
                 lastValueFrom(
-                  this.httpService.get<IGetProductSellingInfo>(SELLING_INFO_URL, {
-                    headers: { Authorization: AUTH_TOKEN },
-                  }),
+                  this.httpService.get<IFetchProductResponseDto>(
+                    PRODUCT_INFO_URL,
+                  ),
+                ),
+                lastValueFrom(
+                  this.httpService.get<IGetProductSellingInfo>(
+                    SELLING_INFO_URL,
+                    {
+                      headers: { Authorization: AUTH_TOKEN },
+                    },
+                  ),
                 ),
               ]);
               const convertedData = convertDigiKalaDataForColumn(
                 productInfo.data,
                 sellingInfo.data,
-                product.initialCost
+                product.initialCost,
               );
-              results.push(convertedData)
+              results.push(convertedData);
             } catch (error) {
               throw new InternalServerErrorException(
                 `خطا در دریافت اطلاعات محصول با کد  ${product.dkp}`,
