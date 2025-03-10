@@ -1,3 +1,6 @@
+import { CurrencyType } from "src/types/global.types";
+import { DeepPartial } from "typeorm";
+
 export interface IInitialCost {
   id?: number;
   buyingPrice: number;
@@ -28,20 +31,20 @@ export interface IExistingProduct {
   dkp: number;
   id?: number;
   title?: string;
-  initialCost: IInitialCost;
+  initialCost: IInitialCost | undefined;
   highestDigikalaCost: IDigikalaCost;
   highestSellingPrice: number;
   lowestDigikalaCost: IDigikalaCost;
   lowestSellingPrice: number;
-  lowestProfit: IProfit;
-  highestProfit: IProfit;
+  lowestProfit: IProfit | undefined;
+  highestProfit: IProfit | undefined;
   imageList: Array<any>;
   sellingStatus: boolean;
   commentRate: number;
   ratingValue: number;
   reviewCount: number;
   suggestionRate: number;
-  currencyType: ICurrencyType;
+  currencyType: DeepPartial<ICurrencyType> | null;
 }
 export interface INewProduct {
   id?: number;
@@ -55,7 +58,7 @@ export interface INewProduct {
   ImageList: Array<string>;
   '1688_WebLink': string;
   taobao_WebLink: string;
-  currencyType: ICurrencyType;
+  currencyType: DeepPartial<ICurrencyType> | null;
 }
 
 export type Product = INewProduct | IExistingProduct;

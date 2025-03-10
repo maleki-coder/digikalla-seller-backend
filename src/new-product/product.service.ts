@@ -7,13 +7,16 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { normalizeArabicPersianNumbers } from 'src/utils/character.covertor';
-import { INewProduct, Product as IProduct } from './product.dto';
+import { IExistingProduct, IInitialCost, INewProduct, Product as IProduct } from './product.dto';
 import { InitialCost } from 'src/initial-cost/initial-cost.entity';
 import { DigikalaCost } from 'src/digikala-cost/digikala-cost.entity';
 import { Product } from './product.entity';
 import { SellingProfit } from 'src/selling-profit/selling-product.entity';
 import { lastValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
+import { IFetchProductResponseDto } from 'src/interface/IFetchProductResponseDto';
+import { IGetProductSellingInfo } from 'src/interface/IGetProductSellingInfo';
+import { convertDigiKalaDataForColumn } from 'src/utils/convertDigiKalaDataForColumn';
 @Injectable()
 export class ProductService {
   constructor(
@@ -26,7 +29,7 @@ export class ProductService {
     @InjectRepository(SellingProfit)
     private readonly sellingProfitRepository: Repository<SellingProfit>,
     private readonly httpService: HttpService,
-  ) {}
+  ) { }
 
   async create(productData: Partial<IProduct>): Promise<Product> {
     try {
@@ -126,7 +129,7 @@ export class ProductService {
     }
   }
 
-  async findAll(isNewProduct?: boolean): Promise<Product[]> {
+  async findAll(isNewProduct?: boolean): Promise<Product[] | IExistingProduct[]> {
     try {
       const queryOptions: any = {
         relations: ['initialCost', 'digikalaCost', 'profit'],
@@ -137,7 +140,7 @@ export class ProductService {
       }
 
       const products = await this.productRepository.find(queryOptions);
-
+      const results: IExistingProduct[] = [];
       await Promise.all(
         products.map(async (product) => {
           if (!product.isNewProduct) {
@@ -151,30 +154,36 @@ export class ProductService {
                 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzM4NCJ9.eyJ0b2tlbl9pZCI6MjQxOTI5OTMsInNlbGxlcl9pZCI6MTUzOTEyOSwicGF5bG9hZCI6eyJ1c2VybmFtZSI6Ijk4OTkxMDcxMTg3MiIsInJlZ2lzdGVyX3Bob25lIjoiOTg5OTEwNzExODcyIiwiZW1haWwiOiJuYWFiaWNvLnRyYWRlQGdtYWlsLmNvbSIsImJ1c2luZXNzX25hbWUiOiJcdTA2MzNcdTA2MmFcdTA2MjdcdTA2MzFcdTA2NDcgXHUwNjQ2XHUwNjM0XHUwNjI3XHUwNjQ2IFx1MDYyYVx1MDYyY1x1MDYyN1x1MDYzMVx1MDYyYSIsImZpcnN0X25hbWUiOiJcdTA2NDVcdTA2MmRcdTA2NDVcdTA2MmYiLCJsYXN0X25hbWUiOiJcdTA2NDVcdTA2NDRcdTA2NDNcdTA2NGEiLCJjb21wYW55X25hbWUiOm51bGwsInZlcmlmaWVkX2J5X290cCI6WyI5ODk5MTA3MTE4NzIiXX0sImV4cCI6MTc0MTc5ODE0Mn0.r9p3RBwwkOK6u-LYBwhU4nsR6d7uJYEUxKeaJDbCVw4pzwOO1Ptgy6Z2nzR2_3ch'; // Store in config
 
               const [productInfo, sellingInfo] = await Promise.all([
-                lastValueFrom(this.httpService.get<any>(PRODUCT_INFO_URL)),
+                lastValueFrom(this.httpService.get<IFetchProductResponseDto>(PRODUCT_INFO_URL)),
                 lastValueFrom(
-                  this.httpService.get<any>(SELLING_INFO_URL, {
+                  this.httpService.get<IGetProductSellingInfo>(SELLING_INFO_URL, {
                     headers: { Authorization: AUTH_TOKEN },
                   }),
                 ),
               ]);
-
+              const convertedData = convertDigiKalaDataForColumn(
+                productInfo.data,
+                sellingInfo.data,
+                product.initialCost,
+                product.digikalaCost
+              );
+  
               // Attach data to product (extend Product type if necessary)
-              Object.assign(product, {
-                externalProductInfo: productInfo.data,
-                externalSellingInfo: sellingInfo.data,
-              });
+              // Object.assign(product, {
+              //   productInfo: convertDigiKalaDataForColumn(productInfo.data, sellingInfo.data, product.initialCost, product.digikalaCost),
+              //   // externalSellingInfo: sellingInfo.data,
+              // });
+              results.push(convertedData)
             } catch (error) {
-              console.error(
-                `Error fetching data for product ${product.id}:`,
-                error.message,
+              throw new InternalServerErrorException(
+                `خطا در دریافت اطلاعات محصول با کد  ${product.dkp}`,
               );
             }
           }
         }),
       );
 
-      return products;
+      return results;
     } catch (error) {
       throw new InternalServerErrorException(
         `خطا در دریافت اطلاعات: ${error.message}`,

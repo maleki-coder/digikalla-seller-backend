@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { Product } from './product.entity';
-import { Product as IProduct } from './product.dto';
+import { IExistingProduct, Product as IProduct } from './product.dto';
 
 @Controller('api/product')
 export class ProductController {
@@ -22,7 +22,7 @@ export class ProductController {
   }
 
   @Get()
-  async findAll(@Query('isNewProduct') isNewProduct?: boolean): Promise<Product[]> {
+  async findAll(@Query('isNewProduct') isNewProduct?: boolean): Promise<Product[] | IExistingProduct[]> {
     return await this.productService.findAll(isNewProduct);
   }
 
