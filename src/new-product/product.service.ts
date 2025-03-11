@@ -34,7 +34,7 @@ export class ProductService {
     @InjectRepository(SellingProfit)
     private readonly sellingProfitRepository: Repository<SellingProfit>,
     private readonly httpService: HttpService,
-  ) {}
+  ) { }
 
   async create(productData: Partial<IProduct>): Promise<Product> {
     try {
@@ -141,67 +141,83 @@ export class ProductService {
       const queryOptions: any = {
         relations: ['initialCost', 'digikalaCost', 'profit'],
       };
-
+  
       const isNewProductBoolean = isNewProduct === 'true';
-
+  
       if (isNewProduct !== undefined) {
         queryOptions.where = { isNewProduct: isNewProductBoolean };
       }
-
+  
       const products = await this.productRepository.find(queryOptions);
-
-      // If isNewProduct is true, return the products directly
+  
       if (isNewProductBoolean) {
-        return products; // Return as Product[]
+        return products;
       }
-      const results: IExistingProduct[] = [];
-      await Promise.all(
-        products.map(async (product) => {
-          if (!product.isNewProduct) {
-            try {
-              const dkp = product.dkp; // Ensure product has a 'dkp' property
-              const DIGIKALA_BASE_URL = 'https://api.digikala.com'; // Replace with actual base URL
-              const SELLER_BASE_URL = 'https://seller.digikala.com'; // Replace with actual base URL
-              const PRODUCT_INFO_URL = `${DIGIKALA_BASE_URL}/v2/product/${dkp}/`;
-              const SELLING_INFO_URL = `${SELLER_BASE_URL}/api/v2/product-creation/be-seller/${dkp}`;
-              const AUTH_TOKEN =
-                'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzM4NCJ9.eyJ0b2tlbl9pZCI6MjQxOTI5OTMsInNlbGxlcl9pZCI6MTUzOTEyOSwicGF5bG9hZCI6eyJ1c2VybmFtZSI6Ijk4OTkxMDcxMTg3MiIsInJlZ2lzdGVyX3Bob25lIjoiOTg5OTEwNzExODcyIiwiZW1haWwiOiJuYWFiaWNvLnRyYWRlQGdtYWlsLmNvbSIsImJ1c2luZXNzX25hbWUiOiJcdTA2MzNcdTA2MmFcdTA2MjdcdTA2MzFcdTA2NDcgXHUwNjQ2XHUwNjM0XHUwNjI3XHUwNjQ2IFx1MDYyYVx1MDYyY1x1MDYyN1x1MDYzMVx1MDYyYSIsImZpcnN0X25hbWUiOiJcdTA2NDVcdTA2MmRcdTA2NDVcdTA2MmYiLCJsYXN0X25hbWUiOiJcdTA2NDVcdTA2NDRcdTA2NDNcdTA2NGEiLCJjb21wYW55X25hbWUiOm51bGwsInZlcmlmaWVkX2J5X290cCI6WyI5ODk5MTA3MTE4NzIiXX0sImV4cCI6MTc0MTc5ODE0Mn0.r9p3RBwwkOK6u-LYBwhU4nsR6d7uJYEUxKeaJDbCVw4pzwOO1Ptgy6Z2nzR2_3ch'; // Store in config
-
-              const [productInfo, sellingInfo] = await Promise.all([
-                lastValueFrom(
-                  this.httpService.get<IFetchProductResponseDto>(
-                    PRODUCT_INFO_URL,
-                  ),
-                ),
-                lastValueFrom(
-                  this.httpService.get<IGetProductSellingInfo>(
-                    SELLING_INFO_URL,
-                    {
-                      headers: { Authorization: AUTH_TOKEN },
-                    },
-                  ),
-                ),
-              ]);
-              const convertedData = convertDigiKalaDataForColumn(
-                productInfo.data,
-                sellingInfo.data,
-                product.initialCost,
-              );
-              results.push(convertedData);
-            } catch (error) {
-              throw new InternalServerErrorException(
-                `خطا در دریافت اطلاعات محصول با کد  ${product.dkp}`,
-              );
-            }
+  
+      const processingPromises = products.map(async (product) => {
+        const dkp = product.dkp;
+        if (!product.isNewProduct) {
+          try {
+            const DIGIKALA_BASE_URL = 'https://api.digikala.com';
+            const SELLER_BASE_URL = 'https://seller.digikala.com';
+            const PRODUCT_INFO_URL = `${DIGIKALA_BASE_URL}/v2/product/${dkp}/`;
+            const SELLING_INFO_URL = `${SELLER_BASE_URL}/api/v2/product-creation/be-seller/${dkp}`;
+            const AUTH_TOKEN ='eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzM4NCJ9.eyJ0b2tlbl9pZCI6MjQxOTI5OTMsInNlbGxlcl9pZCI6MTUzOTEyOSwicGF5bG9hZCI6eyJ1c2VybmFtZSI6Ijk4OTkxMDcxMTg3MiIsInJlZ2lzdGVyX3Bob25lIjoiOTg5OTEwNzExODcyIiwiZW1haWwiOiJuYWFiaWNvLnRyYWRlQGdtYWlsLmNvbSIsImJ1c2luZXNzX25hbWUiOiJcdTA2MzNcdTA2MmFcdTA2MjdcdTA2MzFcdTA2NDcgXHUwNjQ2XHUwNjM0XHUwNjI3XHUwNjQ2IFx1MDYyYVx1MDYyY1x1MDYyN1x1MDYzMVx1MDYyYSIsImZpcnN0X25hbWUiOiJcdTA2NDVcdTA2MmRcdTA2NDVcdTA2MmYiLCJsYXN0X25hbWUiOiJcdTA2NDVcdTA2NDRcdTA2NDNcdTA2NGEiLCJjb21wYW55X25hbWUiOm51bGwsInZlcmlmaWVkX2J5X290cCI6WyI5ODk5MTA3MTE4NzIiXX0sImV4cCI6MTc0MTc5ODE0Mn0.r9p3RBwwkOK6u-LYBwhU4nsR6d7uJYEUxKeaJDbCVw4pzwOO1Ptgy6Z2nzR2_3ch';
+  
+            const [productInfo, sellingInfo] = await Promise.all([
+              lastValueFrom(
+                this.httpService.get<IFetchProductResponseDto>(PRODUCT_INFO_URL),
+              ),
+              lastValueFrom(
+                this.httpService.get<IGetProductSellingInfo>(SELLING_INFO_URL, {
+                  headers: { Authorization: AUTH_TOKEN },
+                }),
+              ),
+            ]);
+  
+            return convertDigiKalaDataForColumn(
+              productInfo.data,
+              sellingInfo.data,
+              product.initialCost,
+            );
+          } catch (error) {
+            // Log error but don't throw - return error for aggregation
+            return { 
+              error: `خطا در دریافت محصول ${dkp}: ${error.message}`,
+              dkp 
+            };
           }
-        }),
-      );
-
+        }
+        return null; // Skip new products
+      });
+  
+      // Wait for ALL promises to settle (success or failure)
+      const settledResults = await Promise.allSettled(processingPromises);
+  
+      const results: IExistingProduct[] = [];
+      const errors: string[] = [];
+  
+      settledResults.forEach((result) => {
+        if (result.status === 'fulfilled') {
+          if (result.value && !('error' in result.value)) {
+            results.push(result.value); // Valid result
+          } else if (result.value?.error) {
+            errors.push(result.value.error); // Individual error
+          }
+        } else {
+          errors.push(result.reason.message); // Unhandled rejection
+        }
+      });
+  
+      if (errors.length > 0) {
+        throw new InternalServerErrorException(
+          `خطا: ${errors.join('; ')}`
+        );
+      }
+  
       return results;
     } catch (error) {
-      throw new InternalServerErrorException(
-        `خطا در دریافت اطلاعات: ${error.message}`,
-      );
+      throw new InternalServerErrorException(error.message);
     }
   }
 
