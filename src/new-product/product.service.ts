@@ -179,6 +179,7 @@ export class ProductService {
               productInfo.data,
               sellingInfo.data,
               product.initialCost,
+              product.id
             );
           } catch (error) {
             // Log error but don't throw - return error for aggregation
@@ -260,12 +261,12 @@ export class ProductService {
       const result = await this.productRepository.delete(id);
       if (result.affected === 0) {
         throw new NotFoundException(
-          `Cannot delete: Product with ID ${id} not found.`,
+          `کالا با کد ${id} یافت نشد.`,
         );
       }
     } catch (error) {
       throw new InternalServerErrorException(
-        `Failed to delete product: ${error.message}`,
+        `خطا در حذف : ${error.message}`,
       );
     }
   }

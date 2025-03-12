@@ -17,6 +17,7 @@ export const convertDigiKalaDataForColumn = (
   productInfo: IFetchProductResponseDto,
   productSellingInfo: IGetProductSellingInfo,
   initialCost: InitialCost,
+  id: number
 ): IExistingProduct => {
   // Helper function to calculate Digikala costs
   const calculateCosts = (price: number) => ({
@@ -102,7 +103,7 @@ export const convertDigiKalaDataForColumn = (
   };
 
   return {
-    id: productInfo?.data?.product?.id,
+    id: id,
     dkp: productInfo?.data?.product?.id,
     title: productInfo?.data?.product?.title_fa,
     highestDigikalaCost,
