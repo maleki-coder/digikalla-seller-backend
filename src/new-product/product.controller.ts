@@ -14,7 +14,7 @@ import { IExistingProduct, Product as IProduct } from './product.dto';
 
 @Controller('api/product')
 export class ProductController {
-  constructor(private readonly productService: ProductService) { }
+  constructor(private readonly productService: ProductService) {}
 
   @Post()
   async create(@Body() productData: Partial<IProduct>): Promise<Product> {
@@ -22,8 +22,19 @@ export class ProductController {
   }
 
   @Get()
-  async findAll(@Query('isNewProduct') isNewProduct?: string): Promise<Product[] | IExistingProduct[]> {
-    return await this.productService.findAll(isNewProduct);
+  async findAll(
+    @Query('isNewProduct') isNewProduct?: string,
+    @Query('page') page = '1', // Default: page 1
+    @Query('limit') limit = '10', // Default: 10 items per page
+  ): Promise<{
+    data: Product[] | IExistingProduct[];
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+  }> {
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    return await this.productService.findAll(isNewProduct, pageNum, limitNum);
   }
 
   @Get(':id')
@@ -40,7 +51,9 @@ export class ProductController {
   }
 
   @Delete(':id')
-  async delete(@Param('id') id: number): Promise<void> {
+  async delete(
+    @Param('id') id: number,
+  ): Promise<{ success: boolean; message: string }> {
     return await this.productService.delete(id);
   }
 }

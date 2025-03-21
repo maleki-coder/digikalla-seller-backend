@@ -9,9 +9,9 @@ import {
 
 import { CurrencyType } from 'src/types/global.types';
 import { DigikalaCost } from 'src/digikala-cost/digikala-cost.entity';
-import { InitialCost } from 'src/initial-cost/initial-cost.entity';
-import { SellingProfit } from 'src/selling-profit/selling-product.entity';
 import { ICurrencyType } from './product.dto';
+import { InitialCost } from 'src/initial-cost/initial-cost.entity';
+import { SellingProfit } from 'src/selling-profit/selling-profit.entity';
 
 @Entity()
 export class Product {
@@ -27,7 +27,7 @@ export class Product {
   @Column('jsonb')
   currencyType: string | null;
 
-  @Column('decimal', { precision: 20, scale: 1, nullable: true })
+  @Column('decimal', { precision: 20, scale: 0, nullable: true })
   sellingPrice: number;
 
   @OneToOne(() => SellingProfit, (SellingProfit) => SellingProfit.product)
